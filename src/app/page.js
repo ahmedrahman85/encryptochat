@@ -6,7 +6,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useAuth } from './context/AuthContext';
 import { AuthProvider } from './context/AuthContext';
-import { encryptMessage, decryptMessage } from '../utils/cryptoUtils';
+import { encryptMessage, decryptMessage } from './utils/cryptoUtils';
 import { toast } from 'react-toastify';
 
 // Wrapper component to provide auth context
