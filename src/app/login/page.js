@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AuthProvider, useAuth } from '..AuthContext.js';
+import { AuthProvider, useAuth } from '../context/AuthContext';
 
 function LoginForm() {
   const [username, setUsername] = useState('');
