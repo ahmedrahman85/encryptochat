@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "convex dev --once --configure=existing && next build",
+    "build": "npx convex deploy && next build",
     "start": "next start",
     "lint": "next lint"
   },
