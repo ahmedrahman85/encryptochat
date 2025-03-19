@@ -46,7 +46,6 @@ function RetroChat() {
   // For conditional queries, always call the hook but pass a skipQuery flag
   const userId = user?.id;
   const selectedUserId = selectedUser?._id;
-  
   // Always call these hooks, but with special values when data isn't available
   const conversation = useQuery(
     api.messages.getConversation,
