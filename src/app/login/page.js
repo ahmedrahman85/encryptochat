@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AuthProvider, useAuth } from '/home/ahmedeus/convex-encrypted-chat/src/app/context/AuthContext.js';
+import { AuthProvider, useAuth } from './context/AuthContext.js';
 
 function LoginForm() {
   const [username, setUsername] = useState('');
