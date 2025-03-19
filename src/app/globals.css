@@ -1,42 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
+  --foreground-rgb: 34, 197, 94;
+  --background-rgb: 0, 0, 0;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  font-family: 'VT323', 'Courier New', monospace;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+.blink {
+  animation: blink 1s step-end infinite;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+/* Custom scrollbar for the retro look */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #22c55e;
+}
+
+::selection {
+  background: #22c55e;
+  color: #000;
+}
+
+/* Focus styles for inputs */
+input:focus {
+  outline: 1px solid #22c55e;
+  caret-color: #22c55e;
+}
+
+/* Hide browser's default input focus outline */
+input:focus-visible {
+  outline: 1px solid #22c55e;
 }

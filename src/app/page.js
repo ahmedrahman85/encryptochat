@@ -1,226 +1,329 @@
-// "use client";
-
-// import { useEffect, useState } from 'react';
-// import { useRouter } from 'next/navigation';
-// import { useMutation, useQuery } from 'convex/react';
-// import { api } from '../../convex/_generated/api';
-// import { useAuth } from './context/AuthContext';
-// import { AuthProvider } from './context/AuthContext';
-// import { encryptMessage, decryptMessage } from './utils/cryptoUtils';
-// import { toast } from 'react-toastify';
-
-// // Wrapper component to provide auth context
-// export default function Home() {
-//   return (
-//     <AuthProvider>
-//       <ChatApp />
-//     </AuthProvider>
-//   );
-// }
-
-// // Main chat application
-// function ChatApp() {
-//   const { user, loading, logout } = useAuth();
-//   const router = useRouter();
-//   const [selectedUser, setSelectedUser] = useState(null);
-//   const [message, setMessage] = useState('');
-//   const [decryptedMessages, setDecryptedMessages] = useState({});
-  
-//   // Always call all hooks unconditionally
-//   const users = useQuery(api.users.list) || [];
-//   const sendMessage = useMutation(api.messages.send);
-//   const updateLastSeen = useMutation(api.users.updateLastSeen);
-  
-//   // For conditional queries, always call the hook but pass a skipQuery flag
-//   const userId = user?.id;
-//   const selectedUserId = selectedUser?._id;
-  
-//   // Always call these hooks, but with empty/null arguments when data isn't available
-//   const conversation = useQuery(
-//     api.messages.getConversation,
-//     userId && selectedUserId 
-//       ? { user1Id: userId, user2Id: selectedUserId } 
-//       : "skip"  // Use a special value that your query handler can check for
-//   ) || [];
-  
-//   const recentConversations = useQuery(
-//     api.messages.getRecentConversations,
-//     userId ? { userId } : "skip"
-//   ) || [];
-  
-//   // All users except the current user
-//   const otherUsers = users.filter(u => u._id !== user?.id);
-  
-//   // Recent conversation partners with user objects
-//   const conversationPartners = recentConversations.map(msg => {
-//     const partnerId = msg.sender === user?.id ? msg.recipient : msg.sender;
-//     return users.find(u => u._id === partnerId);
-//   }).filter(Boolean);
-  
-//   // All potential chat partners (including those with no messages yet)
-//   const allPartners = [...new Map(
-//     [...conversationPartners, ...otherUsers]
-//       .filter(Boolean)
-//       .map(user => [user._id, user])
-//   ).values()];
-  
-//   // Send a new message
-//   const handleSendMessage = async (e) => {
-//     e.preventDefault();
-//     if (!message.trim() || !selectedUser) return;
-    
-//     try {
-//       // Encrypt the message with recipient's public key
-//       const encryptedContent = await encryptMessage(
-//         message,
-//         selectedUser.publicKey
-//       );
-      
-//       // Send the encrypted message
-//       await sendMessage({
-//         content: encryptedContent,
-//         senderId: user.id,
-//         recipientId: selectedUser._id
-//       });
-      
-//       setMessage('');
-//     } catch (error) {
-//       console.error("Error sending message:", error);
-//       toast.error("Failed to send message");
-//     }
-//   };
-  
-//   if (loading) {
-//     return <div className="flex items-center justify-center h-screen">Loading...</div>;
-//   }
-  
-//   if (!user) {
-//     return null; // Will redirect to login
-//   }
-  
-//   return (
-//     <div className="flex h-screen bg-gray-100">
-//       {/* Sidebar */}
-//       <div className="w-1/3 bg-white border-r">
-//         <div className="p-4 border-b flex justify-between items-center">
-//           <h2 className="text-xl font-semibold">Conversations</h2>
-//           <button 
-//             onClick={logout}
-//             className="text-sm text-red-500 hover:text-red-700"
-//           >
-//             Logout
-//           </button>
-//         </div>
-        
-//         <div className="overflow-y-auto h-full pb-20">
-//           {allPartners.length === 0 ? (
-//             <div className="p-4 text-gray-500">No users available to chat with.</div>
-//           ) : (
-//             allPartners.map((partner) => (
-//               <div
-//                 key={partner._id}
-//                 className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${
-//                   selectedUser?._id === partner._id ? 'bg-indigo-50' : ''
-//                 }`}
-//                 onClick={() => setSelectedUser(partner)}
-//               >
-//                 <div className="font-medium">{partner.name}</div>
-//                 <div className="text-sm text-gray-500">
-//                   {partner.lastSeen
-//                     ? `Last seen: ${new Date(partner.lastSeen).toLocaleString()}`
-//                     : 'Offline'}
-//                 </div>
-//               </div>
-//             ))
-//           )}
-//         </div>
-//       </div>
-      
-//       {/* Chat Area */}
-//       <div className="flex-1 flex flex-col">
-//         {selectedUser ? (
-//           <>
-//             {/* Chat Header */}
-//             <div className="p-4 border-b bg-white">
-//               <h2 className="text-xl font-semibold">{selectedUser.name}</h2>
-//             </div>
-            
-//             {/* Messages */}
-//             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-//               {conversation.length === 0 ? (
-//                 <div className="text-center text-gray-500 mt-4">
-//                   No messages yet. Say hello!
-//                 </div>
-//               ) : (
-//                 conversation.map((msg) => (
-//                   <div
-//                     key={msg._id}
-//                     className={`max-w-md p-3 rounded-lg ${
-//                       msg.sender === user.id
-//                         ? 'ml-auto bg-indigo-500 text-white'
-//                         : 'bg-white border'
-//                     }`}
-//                   >
-//                     <div className="text-sm font-medium mb-1">
-//                       {msg.sender === user.id ? 'You' : selectedUser.name}
-//                     </div>
-//                     <div>
-//                       {decryptedMessages[msg._id] || 'Decrypting...'}
-//                     </div>
-//                     <div className="text-xs text-right mt-1 opacity-70">
-//                       {new Date(msg.createdAt).toLocaleTimeString()}
-//                     </div>
-//                   </div>
-//                 ))
-//               )}
-//             </div>
-            
-//             {/* Message Input */}
-//             <div className="p-4 bg-white border-t">
-//               <form onSubmit={handleSendMessage} className="flex space-x-2">
-//                 <input
-//                   type="text"
-//                   value={message}
-//                   onChange={(e) => setMessage(e.target.value)}
-//                   placeholder="Type a message..."
-//                   className="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
-//                 />
-//                 <button
-//                   type="submit"
-//                   className="px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-//                 >
-//                   Send
-//                 </button>
-//               </form>
-//             </div>
-//           </>
-//         ) : (
-//           <div className="flex items-center justify-center h-full text-gray-500">
-//             Select a conversation to start chatting
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
 "use client";
 
-import { useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useQuery, useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
+import { useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+import { encryptMessage, decryptMessage } from './convex/utils/cryptoUtils';
+import { toast } from 'react-toastify';
 
-export default function SimplePage() {
+// ASCII art and retro styles
+const TERMINAL_ASCII = `
+ _____                       _           _   _____ _           _   
+|  ___|                     | |         | | /  __ \\ |         | |  
+| |__ _ __   ___ _ __ _   _ | |_ ___  __| | | /  \\/ |__   __ _| |_ 
+|  __| '_ \\ / __| '__| | | || __/ _ \\/ _\` | | |   | '_ \\ / _\` | __|
+| |__| | | | (__| |  | |_| || ||  __/ (_| | | \\__/\\ | | | (_| | |_ 
+\\____/_| |_|\\___|_|   \\__, | \\__\\___|\\__,_|  \\____/_| |_|\\__,_|\\__|
+                       __/ |                                        
+                      |___/                                         
+`;
+
+// Wrapper component to provide auth context
+export default function Home() {
+  return (
+    <AuthProvider>
+      <RetroChat />
+    </AuthProvider>
+  );
+}
+
+// Main chat application
+function RetroChat() {
+  const { user, loading, logout } = useAuth();
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [message, setMessage] = useState('');
+  const [decryptedMessages, setDecryptedMessages] = useState({});
+  const [showUserList, setShowUserList] = useState(true);
+  const messagesEndRef = useRef(null);
+  
+  // Always call hooks unconditionally
+  const users = useQuery(api.users.list) || [];
+  const sendMessage = useMutation(api.messages.send);
+  const updateLastSeen = useMutation(api.users.updateLastSeen);
+  
+  // For conditional queries, always call the hook but pass a skipQuery flag
+  const userId = user?.id;
+  const selectedUserId = selectedUser?._id;
+  
+  // Always call these hooks, but with special values when data isn't available
+  const conversation = useQuery(
+    api.messages.getConversation,
+    userId && selectedUserId 
+      ? { user1Id: userId, user2Id: selectedUserId } 
+      : "skip"
+  ) || [];
+  
+  const recentConversations = useQuery(
+    api.messages.getRecentConversations,
+    userId ? { userId } : "skip"
+  ) || [];
+  
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
-    console.log("Page loaded");
-    console.log("CONVEX_URL:", process.env.NEXT_PUBLIC_CONVEX_URL);
-    // Check if we have key environment variables
-    console.log("Has Convex URL:", !!process.env.NEXT_PUBLIC_CONVEX_URL);
-  }, []);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [conversation, decryptedMessages]);
+  
+  // Authentication effects
+  useEffect(() => {
+    if (user && userId) {
+      // Update last seen timestamp periodically
+      const interval = setInterval(() => {
+        updateLastSeen({ userId }).catch(console.error);
+      }, 60000); // every minute
+      
+      return () => clearInterval(interval);
+    }
+  }, [user, userId, updateLastSeen]);
+  
+  // Decrypt messages when conversation changes
+  useEffect(() => {
+    async function decryptConversation() {
+      if (!conversation.length) return;
+      
+      const newDecryptedMessages = { ...decryptedMessages };
+      
+      for (const msg of conversation) {
+        // Skip if already decrypted
+        if (newDecryptedMessages[msg._id]) continue;
+        
+        try {
+          const decrypted = await decryptMessage(msg.content);
+          newDecryptedMessages[msg._id] = decrypted;
+        } catch (error) {
+          console.error("Error decrypting message:", error);
+          newDecryptedMessages[msg._id] = "[ENCRYPTION ERROR]";
+        }
+      }
+      
+      setDecryptedMessages(newDecryptedMessages);
+    }
+    
+    decryptConversation();
+  }, [conversation, decryptedMessages]);
+  
+  // All users except the current user
+  const otherUsers = users.filter(u => u._id !== userId);
+  
+  // Recent conversation partners with user objects
+  const conversationPartners = recentConversations.map(msg => {
+    const partnerId = msg.sender === userId ? msg.recipient : msg.sender;
+    return users.find(u => u._id === partnerId);
+  }).filter(Boolean);
+  
+  // All potential chat partners (including those with no messages yet)
+  const allPartners = [...new Map(
+    [...conversationPartners, ...otherUsers]
+      .filter(Boolean)
+      .map(user => [user._id, user])
+  ).values()];
+  
+  // Send a new message
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!message.trim() || !selectedUser) return;
+    
+    try {
+      // Encrypt the message with recipient's public key
+      const encryptedContent = await encryptMessage(
+        message,
+        selectedUser.publicKey
+      );
+      
+      // Send the encrypted message
+      await sendMessage({
+        content: encryptedContent,
+        senderId: userId,
+        recipientId: selectedUserId
+      });
+      
+      setMessage('');
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
+    }
+  };
+  
+  // Handle terminal commands
+  const handleCommand = async (e) => {
+    e.preventDefault();
+    
+    if (message.startsWith('/')) {
+      const cmd = message.toLowerCase().trim();
+      
+      if (cmd === '/help') {
+        toast.info('Available commands: /help, /users, /clear, /logout');
+        setMessage('');
+        return;
+      }
+      
+      if (cmd === '/users') {
+        setShowUserList(true);
+        setSelectedUser(null);
+        setMessage('');
+        return;
+      }
+      
+      if (cmd === '/clear') {
+        // Just clear the input
+        setMessage('');
+        return;
+      }
+      
+      if (cmd === '/logout') {
+        logout();
+        setMessage('');
+        return;
+      }
+      
+      toast.warning(`Unknown command: ${cmd}. Type /help for available commands.`);
+      setMessage('');
+      return;
+    }
+    
+    // Not a command, send as regular message
+    handleSendMessage(e);
+  };
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-black text-green-500 font-mono">
+        <div className="text-center">
+          <div className="text-xl mb-4">INITIALIZING SECURE CONNECTION...</div>
+          <div className="animate-pulse">PLEASE STAND BY</div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-black text-green-500 font-mono">
+        <div className="text-center">
+          <div className="text-xl mb-4">ACCESS DENIED</div>
+          <div>AUTHENTICATION REQUIRED</div>
+        </div>
+      </div>
+    );
+  }
   
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Encrypted Chat App</h1>
-      <p>This is a simplified page for debugging.</p>
-      <p>Check the console for logs.</p>
+    <div className="bg-black text-green-500 h-screen p-4 font-mono overflow-hidden">
+      <div className="max-h-full flex flex-col">
+        {/* Header with ASCII art */}
+        <div className="mb-4 text-center">
+          <pre className="text-xs">{TERMINAL_ASCII}</pre>
+          <div className="text-xs mt-2">SECURE TERMINAL CONNECTION ESTABLISHED</div>
+          <div className="text-xs">** END-TO-END ENCRYPTED **</div>
+        </div>
+        
+        {showUserList ? (
+          /* User Selection Screen */
+          <div className="flex-1 overflow-auto border border-green-500 p-4">
+            <div className="text-amber-500 mb-4">AVAILABLE TERMINAL CONNECTIONS:</div>
+            
+            {allPartners.length === 0 ? (
+              <div className="text-gray-500">NO USERS AVAILABLE FOR CONNECTION.</div>
+            ) : (
+              <div className="space-y-2">
+                {allPartners.map((partner) => (
+                  <div
+                    key={partner._id}
+                    className="p-2 cursor-pointer hover:bg-green-900 hover:bg-opacity-30"
+                    onClick={() => {
+                      setSelectedUser(partner);
+                      setShowUserList(false);
+                    }}
+                  >
+                    <div className="text-amber-300">{partner.name}</div>
+                    <div className="text-xs text-green-300">
+                      {partner.lastSeen
+                        ? `LAST ACTIVE: ${new Date(partner.lastSeen).toLocaleString()}`
+                        : 'STATUS: OFFLINE'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="mt-4 text-xs text-green-300">
+              TYPE /help FOR AVAILABLE COMMANDS
+            </div>
+          </div>
+        ) : (
+          /* Chat Screen */
+          <div className="flex-1 flex flex-col">
+            <div className="bg-green-900 bg-opacity-20 p-2 text-amber-500">
+              SECURE CONNECTION: {user.name} → {selectedUser?.name}
+              <button 
+                onClick={() => {
+                  setShowUserList(true);
+                  setSelectedUser(null);
+                }}
+                className="ml-4 text-xs text-green-300 hover:text-green-100"
+              >
+                [DISCONNECT]
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-2 border border-green-800">
+              <div className="text-xs text-green-300 mb-4">
+                === SESSION STARTED AT {new Date().toLocaleString()} ===
+              </div>
+              
+              {conversation.length === 0 ? (
+                <div className="text-center text-green-300 my-4">
+                  NO PREVIOUS COMMUNICATIONS. ENCRYPTION ACTIVE.
+                </div>
+              ) : (
+                conversation.map((msg) => (
+                  <div key={msg._id} className="mb-2">
+                    <span className={`${msg.sender === userId ? 'text-green-500' : 'text-amber-500'}`}>
+                      {msg.sender === userId ? 'YOU' : selectedUser?.name}@terminal:
+                    </span>{' '}
+                    {decryptedMessages[msg._id] || 'DECRYPTING...'}
+                    <div className="text-xs text-right opacity-50">
+                      {new Date(msg.createdAt).toLocaleTimeString()}
+                    </div>
+                  </div>
+                ))
+              )}
+              
+              <div className="blink inline-block">_</div>
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+        )}
+        
+        {/* Command Input */}
+        <form onSubmit={handleCommand} className="mt-2 flex items-center">
+          <span className="text-amber-500 mr-2">{user.name}@terminal:~$</span>
+          <input 
+            type="text" 
+            value={message} 
+            onChange={(e) => setMessage(e.target.value)} 
+            className="flex-1 bg-black border-none outline-none text-green-500" 
+            autoFocus
+          />
+        </form>
+      </div>
+      
+      <style jsx>{`
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        
+        .blink {
+          animation: blink 1s step-end infinite;
+        }
+        
+        /* Old terminal font styling */
+        .font-mono {
+          font-family: 'VT323', 'Courier New', monospace;
+        }
+      `}</style>
     </div>
   );
 }

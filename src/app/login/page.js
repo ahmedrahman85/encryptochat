@@ -9,7 +9,7 @@ function LoginForm() {
   const { register, loading, user } = useAuth();
   const router = useRouter();
 
-  // Move the redirect logic to useEffect
+  // Redirect if already logged in
   useEffect(() => {
     if (user && !loading) {
       router.push('/');
@@ -32,54 +32,76 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
-      {/* Rest of your form component */}
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-black text-green-500 font-mono p-4">
+      <div className="w-full max-w-md p-8 space-y-8 border border-green-500">
+        <pre className="text-xs text-center">
+{`
+ _____                       _           _   
+|  ___|                     | |         | |  
+| |__ _ __   ___ _ __ _   _ | |_ ___  __| | 
+|  __| '_ \\ / __| '__| | | || __/ _ \\/ _\` | 
+| |__| | | | (__| |  | |_| || ||  __/ (_| | 
+\\____/_| |_|\\___|_|   \\__, | \\__\\___|\\__,_|
+                       __/ |                
+                      |___/                 
+`}
+        </pre>
+        
         <div className="text-center">
-          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900">
-            Encrypted Chat
-          </h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Enter a username to get started with end-to-end encrypted messaging
-          </p>
+          <div className="text-xl mb-1">TERMINAL LOGIN</div>
+          <div className="text-xs mb-4">SECURE CONNECTION REQUIRED</div>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-              Username
+            <label htmlFor="username" className="block text-sm mb-2">
+              ENTER USERNAME:
             </label>
-            <div className="mt-1">
-              <input
-                id="username"
-                name="username"
-                type="text"
-                required
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Choose a username"
-                disabled={loading}
-              />
-            </div>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full p-2 bg-black border border-green-500 focus:outline-none focus:border-green-300 text-green-500"
+              placeholder="_"
+              disabled={loading}
+            />
           </div>
 
           <div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              className="w-full py-2 px-4 border border-green-500 hover:bg-green-900 hover:bg-opacity-30 focus:outline-none"
             >
-              {loading ? 'Processing...' : 'Join Chat'}
+              {loading ? 'CONNECTING...' : 'ESTABLISH CONNECTION'}
             </button>
           </div>
           
-          <div className="text-center text-xs text-gray-500">
-            <p>This application uses end-to-end encryption.</p>
-            <p>Your messages can only be read by their intended recipients.</p>
+          <div className="text-center text-xs mt-4">
+            <div className="blink">_</div>
+            <div className="mt-2">END-TO-END ENCRYPTION ENABLED</div>
+            <div>ALL MESSAGES ARE SECURELY ENCRYPTED</div>
           </div>
         </form>
       </div>
+      
+      <style jsx>{`
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        
+        .blink {
+          animation: blink 1s step-end infinite;
+        }
+        
+        .font-mono {
+          font-family: 'VT323', 'Courier New', monospace;
+        }
+      `}</style>
     </div>
   );
 }
