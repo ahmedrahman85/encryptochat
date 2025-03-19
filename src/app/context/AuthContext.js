@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useMutation } from 'convex/react';
-import { api } from '/home/ahmedeus/convex-encrypted-chat/convex/_generated/api';
-import { generateKeyPair } from '/home/ahmedeus/convex-encrypted-chat/src/app/utils/cryptoUtils.js';
+import { api } from '../../../convex/_generated/api';
+import { generateKeyPair } from '../../utils/cryptoUtils';
 import { toast } from 'react-toastify';
 
 const AuthContext = createContext();
