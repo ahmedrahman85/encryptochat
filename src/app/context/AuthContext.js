@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { generateKeyPair } from '../convex/utils/cryptoUtils';
@@ -11,42 +13,59 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
   
   const registerUser = useMutation(api.users.register);
 
   // Check if user is already logged in
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
+    console.log('AuthProvider - Checking stored user');
+    const storedUser = Cookies.get('user');
+    console.log('Stored user cookie:', storedUser);
+
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        console.log('Parsed user:', parsedUser);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('Error parsing user:', error);
+        Cookies.remove('user');
+      }
     }
+    
     setLoading(false);
   }, []);
 
   // Register a new user
   const register = async (username) => {
     try {
-      console.log("Starting registration process for:", username);
+      console.log('Registration started for:', username);
       setLoading(true);
       
       // Generate encryption keys
-      console.log("Generating encryption keys...");
       const { publicKey } = await generateKeyPair();
-      console.log("Keys generated successfully:", publicKey.substring(0, 20) + "...");
       
       // Register user in the database
-      console.log("Registering with Convex...");
       const userId = await registerUser({
         name: username,
         publicKey: publicKey,
       });
-      console.log("Convex registration successful, userId:", userId);
       
-      // Save user info to state and localStorage
+      // Save user info to cookies
       const userInfo = { id: userId, name: username };
+      console.log('Setting user cookie:', userInfo);
+      
+      Cookies.set('user', JSON.stringify(userInfo), { 
+        expires: 7, // 7 days
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Strict' // Add this to ensure cookie is set correctly
+      });
+      
       setUser(userInfo);
-      localStorage.setItem('user', JSON.stringify(userInfo));
-      console.log("User info saved to localStorage");
+      
+      // Redirect to home
+      router.push('/');
       
       toast.success('SECURE CONNECTION ESTABLISHED');
       return true;
@@ -58,12 +77,12 @@ export function AuthProvider({ children }) {
       setLoading(false);
     }
   };
+
   // Log out the user
   const logout = () => {
+    Cookies.remove('user');
     setUser(null);
-    localStorage.removeItem('user');
-    // Note: We're not removing the private key on logout
-    // so the user can still decrypt their messages if they log back in
+    router.push('/login');
     toast.info('TERMINAL DISCONNECTED');
   };
 
