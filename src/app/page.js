@@ -59,15 +59,14 @@ function RetroChat() {
     userId ? { userId } : "skip"
   ) || [];
   
-  // Scroll to bottom when new messages arrive
+  // scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversation, decryptedMessages]);
-  
-  // Authentication effects
+p/ 
   useEffect(() => {
     if (user && userId) {
-      // Update last seen timestamp periodically
+      // update last seen timestamp periodically
       const interval = setInterval(() => {
         updateLastSeen({ userId }).catch(console.error);
       }, 60000); // every minute
@@ -76,61 +75,71 @@ function RetroChat() {
     }
   }, [user, userId, updateLastSeen]);
   
-  // Decrypt messages when conversation changes
+  // decrypt messages when conversation changes
   useEffect(() => {
     async function decryptConversation() {
       if (!conversation.length) return;
       
-      const newDecryptedMessages = { ...decryptedMessages };
+      const newDecryptedMessages = {};
+      let hasChanges = false;
       
       for (const msg of conversation) {
-        // Skip if already decrypted
-        if (newDecryptedMessages[msg._id]) continue;
+        if (decryptedMessages[msg._id]) {
+          newDecryptedMessages[msg._id] = decryptedMessages[msg._id];
+          continue;
+        }
         
         try {
           const decrypted = await decryptMessage(msg.content);
           newDecryptedMessages[msg._id] = decrypted;
+          hasChanges = true;
         } catch (error) {
           console.error("Error decrypting message:", error);
           newDecryptedMessages[msg._id] = "[ENCRYPTION ERROR]";
+          hasChanges = true;
         }
       }
       
-      setDecryptedMessages(newDecryptedMessages);
+      if (hasChanges) {
+        setDecryptedMessages(prevMessages => ({
+          ...prevMessages,
+          ...newDecryptedMessages
+        }));
+      }
     }
     
     decryptConversation();
-  }, [conversation]);
+  }, [conversation]); 
+
   
-  // All users except the current user
   const otherUsers = users.filter(u => u._id !== userId);
   
-  // Recent conversation partners with user objects
+  
   const conversationPartners = recentConversations.map(msg => {
     const partnerId = msg.sender === userId ? msg.recipient : msg.sender;
     return users.find(u => u._id === partnerId);
   }).filter(Boolean);
   
-  // All potential chat partners (including those with no messages yet)
+  // all potential chat partners (including those with no messages yet)
   const allPartners = [...new Map(
     [...conversationPartners, ...otherUsers]
       .filter(Boolean)
       .map(user => [user._id, user])
   ).values()];
   
-  // Send a new message
+  // send a new message
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!message.trim() || !selectedUser) return;
     
     try {
-      // Encrypt the message with recipient's public key
+      // encrypt the message with recipient's public key
       const encryptedContent = await encryptMessage(
         message,
         selectedUser.publicKey
       );
       
-      // Send the encrypted message
+      // send the encrypted message
       await sendMessage({
         content: encryptedContent,
         senderId: userId,
@@ -144,7 +153,7 @@ function RetroChat() {
     }
   };
   
-  // Handle terminal commands
+  // handle terminal commands
   const handleCommand = async (e) => {
     e.preventDefault();
     
@@ -165,7 +174,7 @@ function RetroChat() {
       }
       
       if (cmd === '/clear') {
-        // Just clear the input
+        // just clear the input
         setMessage('');
         return;
       }

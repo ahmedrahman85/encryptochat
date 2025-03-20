@@ -40,13 +40,11 @@ body {
   color: #000;
 }
 
-/* Focus styles for inputs */
 input:focus {
   outline: 1px solid #22c55e;
   caret-color: #22c55e;
 }
 
-/* Hide browser's default input focus outline */
 input:focus-visible {
   outline: 1px solid #22c55e;
 }

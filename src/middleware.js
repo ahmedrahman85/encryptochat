@@ -8,13 +8,13 @@ export default function middleware(request) {
   console.log('Middleware - Current Path:', pathname);
   console.log('Middleware - User Cookie:', user);
 
-  // If no user and not on login page, redirect to login
+  // if no user and not on login page, redirect to login
   if (!user && pathname !== '/login') {
     console.log('Redirecting to login');
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // If user exists and on login page, redirect to home
+  // if user exists and on login page, redirect to home
   if (user && pathname === '/login') {
     console.log('Redirecting to home');
     return NextResponse.redirect(new URL('/', request.url))

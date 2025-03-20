@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
   
   const registerUser = useMutation(api.users.register);
 
-  // Check if user is already logged in
+  // check if user is already logged in
   useEffect(() => {
     console.log('AuthProvider - Checking stored user');
     const storedUser = Cookies.get('user');
@@ -37,22 +37,22 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  // Register a new user
+  // register a new user
   const register = async (username) => {
     try {
       console.log('Registration started for:', username);
       setLoading(true);
       
-      // Generate encryption keys
+      // generate encryption keys
       const { publicKey } = await generateKeyPair();
       
-      // Register user in the database
+      // register user in the database
       const userId = await registerUser({
         name: username,
         publicKey: publicKey,
       });
       
-      // Save user info to cookies
+      // save user info to cookies
       const userInfo = { id: userId, name: username };
       console.log('Setting user cookie:', userInfo);
       
@@ -64,7 +64,7 @@ export function AuthProvider({ children }) {
       
       setUser(userInfo);
       
-      // Redirect to home
+      // redirect to home
       router.push('/');
       
       toast.success('SECURE CONNECTION ESTABLISHED');
@@ -78,7 +78,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Log out the user
+  // log out the user
   const logout = () => {
     Cookies.remove('user');
     setUser(null);
