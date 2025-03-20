@@ -100,7 +100,7 @@ function RetroChat() {
     }
     
     decryptConversation();
-  }, [conversation, decryptedMessages]);
+  }, [conversation]);
   
   // All users except the current user
   const otherUsers = users.filter(u => u._id !== userId);
